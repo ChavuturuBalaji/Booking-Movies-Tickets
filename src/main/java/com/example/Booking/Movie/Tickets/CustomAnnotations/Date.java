@@ -10,6 +10,7 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.FIELD,ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = DateValidator.class)
 public @interface Date {
     public String message() default "day and month contain 2 digits year contain 4 digits (dd/MM/yyyy)";
 

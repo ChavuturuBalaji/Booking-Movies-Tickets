@@ -1,6 +1,7 @@
 package com.example.Booking.Movie.Tickets.Models;
 
 
+import com.example.Booking.Movie.Tickets.CustomAnnotations.Date;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

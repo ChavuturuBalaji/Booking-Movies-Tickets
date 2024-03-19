@@ -1,5 +1,6 @@
 package com.example.Booking.Movie.Tickets.Entities;
 
+import com.example.Booking.Movie.Tickets.CustomAnnotations.Date;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
