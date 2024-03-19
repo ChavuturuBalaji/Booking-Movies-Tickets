@@ -19,4 +19,5 @@ public interface AdminSerInter {
      ResponseEntity<?> deleteShow(int showId);
      ResponseEntity<?> deleteSeats(int showId,List<SeatsModel> seats);
       ResponseEntity<?> getNumberOfBookings(int theaterId, int movieId);
+      ResponseEntity<?> getAllMovies();
 }

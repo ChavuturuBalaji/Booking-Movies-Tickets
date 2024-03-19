@@ -173,7 +173,6 @@ public class AdminSerImpl implements AdminSerInter {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("movie not found enter valid id");
         }
         ShowsEntity showsEntity = modelsEntity.showModel_entity(showsModel);
-        System.out.println("balaji");
         if (!theatre.get().getShows().isEmpty()){
             if(theatre.get().getShows().stream().anyMatch(i -> i.getShowTime().equals(showsModel.getShowTime()) &&
                     i.getDate().equals(showsModel.getDate()))){
@@ -408,5 +407,10 @@ public class AdminSerImpl implements AdminSerInter {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Movie not found enter valid id");
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Theater not found enter valid id");
+    }
+
+    @Override
+    public ResponseEntity<?> getAllMovies(){
+        return new ResponseEntity<>(movieRepo.findAll().stream().map(movie -> entityModels.movieEntity_model(movie)).toList(),HttpStatus.OK);
     }
 }

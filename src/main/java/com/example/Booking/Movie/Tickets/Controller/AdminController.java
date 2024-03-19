@@ -68,4 +68,11 @@ public class AdminController {
     public ResponseEntity<?> rest(@RequestParam int theaterId, @RequestParam int movieId){
         return adminSer.getNumberOfBookings(theaterId,movieId);
     }
+
+    @GetMapping("/allMovies")
+    public ResponseEntity<?> getAllMovies(){
+        return adminSer.getAllMovies();
+    }
+
+
 }

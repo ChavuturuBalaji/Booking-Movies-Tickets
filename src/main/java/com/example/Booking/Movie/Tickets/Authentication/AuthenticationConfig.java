@@ -51,6 +51,7 @@ public class AuthenticationConfig {
                 .requestMatchers(HttpMethod.POST,"/admin/addExistMovie").hasRole("THEATERADMIN")
                 .requestMatchers(HttpMethod.DELETE,"/admin/deleteMovieInTheater").hasRole("THEATERADMIN")
                 .requestMatchers(HttpMethod.GET,"/admin/getMovies").hasRole("THEATERADMIN")
+                .requestMatchers(HttpMethod.GET,"/admin/allMovies").hasRole("THEATERADMIN")
                 .requestMatchers(HttpMethod.DELETE,"/admin/deleteShow").hasRole("THEATERADMIN")
                 .requestMatchers(HttpMethod.DELETE,"/admin/deleteSeats").hasRole("THEATERADMIN")
                 .requestMatchers(HttpMethod.GET,"/admin/balaji").hasRole("THEATERADMIN")
