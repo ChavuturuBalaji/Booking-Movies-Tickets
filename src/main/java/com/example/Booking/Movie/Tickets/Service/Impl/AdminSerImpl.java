@@ -377,8 +377,9 @@ public class AdminSerImpl implements AdminSerInter {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Show not found");
     }
 
-    @Override
+
     public ResponseEntity<?> getNumberOfBookings(int theaterId, int movieId){
+
         if (theaterRepo.existsById(theaterId)){
             if (movieRepo.existsById(movieId)){
                 Optional<TheatreEntity> theatre = theaterRepo.findById(theaterId);

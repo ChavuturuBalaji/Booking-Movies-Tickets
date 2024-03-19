@@ -64,10 +64,6 @@ public class AdminController {
         return adminSer.deleteSeats(showId,seats);
     }
 
-    @GetMapping("/balaji")
-    public ResponseEntity<?> rest(@RequestParam int theaterId, @RequestParam int movieId){
-        return adminSer.getNumberOfBookings(theaterId,movieId);
-    }
 
     @GetMapping("/allMovies")
     public ResponseEntity<?> getAllMovies(){
