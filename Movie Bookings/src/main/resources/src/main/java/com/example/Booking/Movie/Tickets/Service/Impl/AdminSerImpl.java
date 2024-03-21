@@ -185,19 +185,6 @@ public class AdminSerImpl implements AdminSerInter {
         TheatreEntity savedTheatre = theaterRepo.save(theatre.get());
         return new ResponseEntity<>(entityModels.setShows(savedTheatre),HttpStatus.CREATED);
     }
-
-    public TheaterModel getTheatre(){
-        TheatreEntity theatreEntity = theaterRepo.findById(1).get();
-        TheaterModel theaterModel = entityModels.setShows(theatreEntity);
-        System.out.println("00");
-        return theaterModel;
-    }
-
-    public MovieEntity getMovie(int id){
-        return movieRepo.findById(id).get();
-    }
-
-
     @Override
     //add seats
     public ResponseEntity<?> addSeats(int id, List<SeatsModel> seatsModel){
@@ -205,7 +192,6 @@ public class AdminSerImpl implements AdminSerInter {
         if (showsEntity.isEmpty()){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Show not found");
         }
-
         Set<SeatsModel> existSeats = seatsModel.stream().filter(seat -> showsEntity.get().getSeats().stream().anyMatch(j ->
                 j.getSeatNumber() == seat.getSeatNumber())).collect(Collectors.toSet());  // check already seats are present in show or not
 
@@ -267,37 +253,6 @@ public class AdminSerImpl implements AdminSerInter {
                 theaterRepo.save(theatre);
                 return ResponseEntity.status(HttpStatus.OK).body("Movies is removed from theater");
 
-//                if (movie.getShows().isEmpty()){  // check movie has any shows
-//                    theatre.getMovies().remove(movie);
-//                    theaterRepo.save(theatre);
-//                    return ResponseEntity.status(HttpStatus.OK).body("Movies is removed from theater");
-//                }
-//
-//                List<ShowsEntity> shows = showsRepo.findByTheatreAndMovie(theatre,movie);
-//
-//                boolean bool = shows.stream()
-//                        .anyMatch(show -> show.getSeats().stream().anyMatch(SeatsEntity::isBooked));
-//                if(bool){
-//                    return ResponseEntity.status(HttpStatus.CONFLICT).body("seats are booked by user so removing movie will not possible");
-//                }
-//                shows.forEach(show ->{
-//                    LocalDate currentDate = LocalDate.now();
-//                    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-//                    LocalDate date = LocalDate.parse(show.getDate(), dateFormatter);
-//                    if (date.isBefore(currentDate)){
-//                        show.getSeats().forEach(seat->{
-//                            seat.setShow(null);
-//                            seatRepo.deleteById(seat.getSeatId());
-//                        });
-//                    }
-//                    show.getSeats().forEach(seat->{
-//                        seat.setShow(null);
-//                        seatRepo.deleteById(seat.getSeatId());
-//                    });
-//                });
-//                shows.clear();
-//                movie.setShows(shows);
-
             }
             return ResponseEntity.status(HttpStatus.OK).body("Movies is not present in theater");
         }
@@ -310,7 +265,7 @@ public class AdminSerImpl implements AdminSerInter {
             Optional<ShowsEntity> shows = showsRepo.findById(showId);
             if (shows.isPresent()){
                 try{
-                    DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                    DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:MM:SSS");
                     LocalDate date = LocalDate.parse(shows.get().getDate(),dateFormat);
                     LocalDate currentDate = LocalDate.now();
                     if (date.isBefore(currentDate)){
