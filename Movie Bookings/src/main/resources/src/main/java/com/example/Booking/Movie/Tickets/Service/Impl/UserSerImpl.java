@@ -17,9 +17,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -161,18 +159,24 @@ public class UserSerImpl implements UserInterface {
             if (date1.isBefore(currentDate)){
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Enter correct date");
             }
+            if (date1.isEqual(currentDate)){
+                try {
+                    LocalTime currentTime = LocalTime.now();
+                    LocalTime showTime = LocalTime.parse(time);
+                    System.out.println("show time");
+                    if (showTime.isBefore(currentTime)){
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("show is completed");
+                    }
+                }catch (Exception e){
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Enter valid time (hh:mm)");
+                }
+            }
         }catch (Exception e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Enter valid date");
         }
 
-
-        try {
-            LocalTime currentTime = LocalTime.now();
+        try{
             LocalTime showTime = LocalTime.parse(time);
-            System.out.println("show time");
-            if (showTime.isBefore(currentTime)){
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("show is completed");
-            }
         }catch (Exception e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Enter valid time (hh:mm)");
         }
@@ -182,7 +186,7 @@ public class UserSerImpl implements UserInterface {
                 && i.getTheatre().getTheatreName().equalsIgnoreCase(theaterName) &&i.getTheatre().getLocation().equalsIgnoreCase(location)
                 && i.getDate().equalsIgnoreCase(date) && i.getShowTime().equals(time)).findFirst();
         if (shows.isEmpty()){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("show not found please enter valid date and time");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Based on provided time show is not available");
         }
         AvailableSeats availableSeats = new AvailableSeats();
         shows.get().getSeats().forEach(i ->{
@@ -194,6 +198,9 @@ public class UserSerImpl implements UserInterface {
                 available.add(i.getSeatNumber());
             }
         });
+        if (CollectionUtils.isEmpty(availableSeats.getAvailableSeats())){
+            return ResponseEntity.status(HttpStatus.OK).body("No available seats all seats has been booked");
+        }
         return new ResponseEntity<>(availableSeats,HttpStatus.OK);
     }
 
@@ -212,10 +219,32 @@ public class UserSerImpl implements UserInterface {
             if (theatre.isPresent()) {
                 List<Integer> blockedSeats= new ArrayList<>();
 
-                // check seats user entered seats are available are booked
-                List<Integer> checkAvailable = temporaryBooking.getSeats().stream()
-                        .filter(seat -> booked.contains(seat)).toList();
+                System.out.println(temporaryBooking.getMovieName()+" "+ temporaryBooking.getTheaterName()+" " +temporaryBooking.getLocation());
 
+                Optional<ShowsEntity> showsEntity = showsRepo.findAll().stream().filter(i -> i.getShowTime().equals(temporaryBooking.getShowTime()) &&
+                        i.getDate().equals(temporaryBooking.getDate()) && i.getMovie().equals(movie.get()) &&
+                        i.getTheatre().equals(theatre.get())).findFirst();
+
+                if (showsEntity.isEmpty()){
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("show not found");
+                }
+                // check user entered seats numbers present in show
+                List<Integer> invalidSeats = temporaryBooking.getSeats().stream()
+                        .filter(seatNumber -> showsEntity.get().getSeats().stream()
+                                        .noneMatch(seatEntity -> seatEntity.getSeatNumber() == seatNumber)).toList();
+
+                if (!CollectionUtils.isEmpty(invalidSeats)){
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body("These seats numbers are not present in please enter available seat numbers:- " +invalidSeats.stream()
+                                    .map(String::valueOf).collect(Collectors.joining(",")));
+                }
+
+
+                System.out.println(showsEntity.get().getShowId());
+                System.out.println("s");
+                List<Integer> bookedSeats = showsEntity.get().getSeats().stream().filter(SeatsEntity::isBooked).map(SeatsEntity::getSeatNumber).toList();
+                // check seats user entered seats are available are booked
+                List<Integer> checkAvailable = bookedSeats.stream().filter(seat -> temporaryBooking.getSeats().contains(seat)).toList();
 
                 if (CollectionUtils.isEmpty(checkAvailable)){
 
@@ -233,20 +262,16 @@ public class UserSerImpl implements UserInterface {
                             .map(seat -> String.valueOf(seat)).collect(Collectors.joining(",")));
                 }
                 if (CollectionUtils.isEmpty(blockedSeats)) {
-                    Optional<ShowsEntity> showsEntity = showsRepo.findAll().stream().filter(i -> i.getShowTime().equals(temporaryBooking.getShowTime()) &&
-                            i.getDate().equals(temporaryBooking.getDate()) && i.getMovie().getMovieName().equalsIgnoreCase(temporaryBooking.getMovieName()) &&
-                            i.getTheatre().getTheatreName().equalsIgnoreCase(temporaryBooking.getTheaterName())).findFirst();
-                    if(showsEntity.isPresent()){
-                        double totalPrice = showsEntity.get().getTicket_Price() * temporaryBooking.getSeats().size();
-                        TemporaryBookingEntity temp = models_Entity.tempModel_Entity(temporaryBooking);
-                        temp.setTotalPrice(totalPrice);
-                        this.userName = temporaryBooking.getUserName();
-                        TemporaryBookingEntity temporaryBookingEntity = tempBookingRepo.save(temp);
-                        this.tempId = temporaryBookingEntity.getTempId();
-                        this.showId = showsEntity.get().getShowId();
-                        return new ResponseEntity<>(temporaryBookingEntity,HttpStatus.OK);
-                    }
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("show not found");
+                    double totalPrice = showsEntity.get().getTicket_Price() * temporaryBooking.getSeats().size();
+                    TemporaryBookingEntity temp = models_Entity.tempModel_Entity(temporaryBooking);
+                    temp.setTotalPrice(totalPrice);
+                    this.userName = temporaryBooking.getUserName();
+                    TemporaryBookingEntity temporaryBookingEntity = tempBookingRepo.save(temp);
+                    this.tempId = temporaryBookingEntity.getTempId();
+                    this.showId = showsEntity.get().getShowId();
+                    return new ResponseEntity<>(temporaryBookingEntity,HttpStatus.OK);
+
+
                 }
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("These seats are blocked by other user:- " + blockedSeats.stream()
                         .map(seat -> String.valueOf(seat)).collect(Collectors.joining(",")));
@@ -270,7 +295,6 @@ public class UserSerImpl implements UserInterface {
             }
             BookingEntity bookingEntity = models_Entity.temp_bookingEntity(temp.get());
             Optional<UserEntity> user = userRepo.findById(temp.get().getUserName());
-//            System.out.println(user.get().getMobile());
 
             bookingEntity.setUsers(user.get());
             List<SeatsEntity> seats = seatRepo.findByShow(showsRepo.findById(this.showId).get());
@@ -311,76 +335,6 @@ public class UserSerImpl implements UserInterface {
     }
 
 
-//    public ResponseEntity<?> cancelConfirm(){
-//        if (bookingRepo.existsById(this.bookingId)){
-//            BookingEntity booking = bookingRepo.findById(this.bookingId).get();
-//            String sDate = booking.getDate();
-//            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-//            LocalDate date = LocalDate.parse(sDate, dateFormatter);
-//
-//            LocalDate currentDate = LocalDate.now();
-//
-//            Optional<ShowsEntity> showsEntity = showsRepo.findAll().stream().filter(i ->i.getShowTime().equals(booking.getShowTime()) &&
-//                    i.getDate().equals(booking.getDate()) && i.getTheatre().getTheatreName().equals(booking.getTheaterName()) &&
-//                    i.getMovie().getMovieName().equals(booking.getMovieName())).findFirst();
-//            if (showsEntity.isEmpty()){
-//                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("show not found");
-//            }
-//            if (date.isBefore(currentDate)) { // past date
-//                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The booking show is already completed");
-//            } else if (date.isEqual(currentDate)) { // current date
-//                String sTime = booking.getShowTime();
-//                LocalTime time = LocalTime.parse(sTime);
-//                LocalTime currentTime = LocalTime.now();
-//                System.out.println(currentTime);
-//
-//                if (time.isBefore(currentTime)) {
-//                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The show has already started, you can't cancel the booking");
-//                } else if (time.equals(currentTime)) {
-//                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("The show has already started, you can't cancel the booking");
-//                } else {
-//                    long minutesDifference = ChronoUnit.MINUTES.between(currentTime, time);
-//
-//                    if (minutesDifference<=60){
-//                        double price = booking.getTotalPrice()*0.5;
-//                        List<SeatsEntity> seats = seatRepo.findByShow(showsEntity.get());
-//                        seats.forEach(i -> {
-//                            if (booking.getSeats().contains(i.getSeatNumber())) {
-//                                i.setBooked(false);
-//                            }
-//                        });
-//                        seatRepo.saveAll(seats);
-//                        bookingRepo.deleteById(this.bookingId);
-//                        return ResponseEntity.status(HttpStatus.OK).body("Rupees " + price + " has been refund");
-//
-//                    }
-//                    List<SeatsEntity> seats = seatRepo.findByShow(showsEntity.get());
-//                    seats.forEach(i -> {
-//                        if (booking.getSeats().contains(i.getSeatNumber())) {
-//                            i.setBooked(false);
-//                        }
-//                    });
-//                    seatRepo.saveAll(seats);
-//                    bookingRepo.deleteById(this.bookingId);
-//                    return ResponseEntity.status(HttpStatus.OK).body("Total amount has been refund");
-//
-//                }
-//            } else {
-//                List<SeatsEntity> seats = seatRepo.findByShow(showsEntity.get());
-//                seats.forEach(i -> {
-//                    if (booking.getSeats().contains(i.getSeatNumber())) {
-//                        i.setBooked(false);
-//                    }
-//                });
-//                seatRepo.saveAll(seats);
-//                bookingRepo.deleteById(this.bookingId);
-//                return ResponseEntity.status(HttpStatus.OK).body("Total amount has been refund");
-//            }
-//
-//        }
-//        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Booking not found please enter correct booking id");
-//    }
-
     @Override
     public ResponseEntity<?> cancelConfirm() {
         Optional<BookingEntity> bookingOptional = bookingRepo.findById(this.bookingId);
@@ -417,12 +371,15 @@ public class UserSerImpl implements UserInterface {
     }
 
     private void refundAndReleaseSeats(BookingEntity booking) {
+        System.out.println(booking.getTheaterName()+" " + booking.getLocation()+" "+booking.getMovieName());
+
+
         List<Integer> abc = new ArrayList<>();
-        Optional<ShowsEntity> showsEntity = showsRepo.findAll().stream()
+        Optional<ShowsEntity> showsEntity = showsRepo.findAll().stream().peek(i -> System.out.println(i.getShowId()))
                 .filter(i -> i.getShowTime().equals(booking.getShowTime()) &&
                         i.getDate().equals(booking.getDate()) &&
-                        i.getTheatre().getTheatreName().equals(booking.getTheaterName()) &&
-                        i.getMovie().getMovieName().equals(booking.getMovieName()))
+                        i.getTheatre().getTheatreName().equalsIgnoreCase(booking.getTheaterName()) &&
+                        i.getMovie().getMovieName().equalsIgnoreCase(booking.getMovieName()))
                 .findFirst();
 
         if (showsEntity.isEmpty()) {
@@ -442,6 +399,40 @@ public class UserSerImpl implements UserInterface {
             userRepo.save(user.get());
         }
         bookingRepo.deleteById(booking.getBookingId());
+    }
+
+
+    public void  getTopMovieAndTopTheater(){
+
+        //Single record
+        Optional<ShowsEntity> shows = showsRepo.findAll().stream()
+                .max(Comparator.comparingLong(show -> show.getSeats().stream().filter(SeatsEntity::isBooked).count()));
+
+        TheatreEntity theatre = shows.get().getTheatre();
+        MovieEntity movie = shows.get().getMovie();
+
+        System.out.println("Theater Name:- " + theatre.getTheatreName() + "\n"+ "Theater Location:- "+ theatre.getLocation());
+        System.out.println("Movie Name:- " + movie.getMovieName());
+
+
+        //multiple records based on highest seats booking
+        List<ShowsEntity> sortedShows = showsRepo.findAll().stream()
+                .sorted(Comparator.comparingLong(show -> countBookedSeats((ShowsEntity) show)).reversed())
+                .toList();
+
+        Set<String> uniqueShows = new HashSet<>();
+        sortedShows.forEach(show -> {
+            String showInfo = "Theater Name:- "+show.getTheatre().getTheatreName() + "\n"+
+                    "Theater Location:- " + show.getTheatre().getLocation() +"\n"+ "Movie name:- " + show.getMovie().getMovieName();
+            if (uniqueShows.add(showInfo)) {
+                System.out.println(showInfo);
+            }
+        });
+
+
+    }
+    private long countBookedSeats(ShowsEntity show) {
+        return show.getSeats().stream().filter(SeatsEntity::isBooked).count();
     }
 
 }
