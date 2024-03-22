@@ -306,7 +306,7 @@ public class UserSerImpl implements UserInterface {
             tempBookingRepo.deleteById(this.tempId);
             return new ResponseEntity<>(entityModels.bookingEntity_Model(bookingRepo.save(bookingEntity)),HttpStatus.OK);
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Booking details not found");
     }
 
     @Override
