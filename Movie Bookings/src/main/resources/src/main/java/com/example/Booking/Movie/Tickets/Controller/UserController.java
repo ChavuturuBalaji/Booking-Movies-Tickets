@@ -75,4 +75,9 @@ public class UserController {
     public ResponseEntity<?> cancelConfirm(){
         return userSer.cancelConfirm();
     }
+
+    @GetMapping("/getTopMovieAndTheater")
+    public void getTopMovieAndTheater(){
+        userSer.getTopMovieAndTopTheater();
+    }
 }
