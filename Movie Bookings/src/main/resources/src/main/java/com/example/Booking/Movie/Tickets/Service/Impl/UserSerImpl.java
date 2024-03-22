@@ -373,8 +373,6 @@ public class UserSerImpl implements UserInterface {
     private void refundAndReleaseSeats(BookingEntity booking) {
         System.out.println(booking.getTheaterName()+" " + booking.getLocation()+" "+booking.getMovieName());
 
-
-        List<Integer> abc = new ArrayList<>();
         Optional<ShowsEntity> showsEntity = showsRepo.findAll().stream().peek(i -> System.out.println(i.getShowId()))
                 .filter(i -> i.getShowTime().equals(booking.getShowTime()) &&
                         i.getDate().equals(booking.getDate()) &&
