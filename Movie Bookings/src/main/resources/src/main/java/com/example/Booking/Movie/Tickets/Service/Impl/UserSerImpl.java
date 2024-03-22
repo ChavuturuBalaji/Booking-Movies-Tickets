@@ -240,8 +240,7 @@ public class UserSerImpl implements UserInterface {
                 }
 
 
-                System.out.println(showsEntity.get().getShowId());
-                System.out.println("s");
+            
                 List<Integer> bookedSeats = showsEntity.get().getSeats().stream().filter(SeatsEntity::isBooked).map(SeatsEntity::getSeatNumber).toList();
                 // check seats user entered seats are available are booked
                 List<Integer> checkAvailable = bookedSeats.stream().filter(seat -> temporaryBooking.getSeats().contains(seat)).toList();
