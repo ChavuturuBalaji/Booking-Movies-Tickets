@@ -16,4 +16,5 @@ public interface UserInterface {
      ResponseEntity<?> myBookings(String userName);
      ResponseEntity<?> cancelTicket(int bookingId);
      ResponseEntity<?> cancelConfirm();
+     void  getTopMovieAndTopTheater();
 }
