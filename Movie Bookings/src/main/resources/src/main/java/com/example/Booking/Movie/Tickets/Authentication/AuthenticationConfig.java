@@ -30,6 +30,7 @@ public class AuthenticationConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests((authorize) -> authorize.requestMatchers(HttpMethod.POST,"/user/register").permitAll()
+                .requestMatchers(HttpMethod.GET,"/user/getTopMovieAndTheater").permitAll()
                 .requestMatchers(HttpMethod.GET,"/user/movies").hasRole("USER")
                 .requestMatchers(HttpMethod.GET,"/user/theaters").hasRole("USER")
                 .requestMatchers(HttpMethod.GET,"/user/shows").hasRole("USER")
