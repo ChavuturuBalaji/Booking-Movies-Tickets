@@ -219,7 +219,6 @@ public class UserSerImpl implements UserInterface {
             if (theatre.isPresent()) {
                 List<Integer> blockedSeats= new ArrayList<>();
 
-                System.out.println(temporaryBooking.getMovieName()+" "+ temporaryBooking.getTheaterName()+" " +temporaryBooking.getLocation());
 
                 Optional<ShowsEntity> showsEntity = showsRepo.findAll().stream().filter(i -> i.getShowTime().equals(temporaryBooking.getShowTime()) &&
                         i.getDate().equals(temporaryBooking.getDate()) && i.getMovie().equals(movie.get()) &&
